@@ -7,7 +7,7 @@ import com.pemwa.devbytesplayer.domain.Video
 /**
  * A data class defining the [DatabaseVideo] object/entity
  */
-@Entity
+@Entity(tableName = "video_database_table")
 data class DatabaseVideo constructor(
 
     @PrimaryKey
