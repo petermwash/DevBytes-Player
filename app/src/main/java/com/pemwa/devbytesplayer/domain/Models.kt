@@ -11,7 +11,7 @@ import com.pemwa.devbytesplayer.util.smartTruncate
  */
 
 /**
- * Videos represent a devbyte that can be played.
+ * Video represent a devbyte that can be played.
  */
 data class Video(val title: String,
                  val description: String,
