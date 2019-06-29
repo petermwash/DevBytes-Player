@@ -14,7 +14,7 @@ import retrofit2.HttpException
  *
  * We use a CoroutineWorker, because we want to use coroutines to handle our asynchronous code and threading.
  */
-class RefreshDataWork(
+class RefreshDataWorker(
     appContext: Context,
     params: WorkerParameters) : CoroutineWorker(appContext, params) {
 
@@ -34,5 +34,11 @@ class RefreshDataWork(
         }
     }
 
+    /**
+     * Creating a unique identifier for our work
+     */
+    companion object {
+        const val WORK_NAME = "RefreshDataWorker"
+    }
 
 }
