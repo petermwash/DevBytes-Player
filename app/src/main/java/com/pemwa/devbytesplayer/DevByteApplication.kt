@@ -1,9 +1,8 @@
 package com.pemwa.devbytesplayer
 
 import android.app.Application
-import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.PeriodicWorkRequestBuilder
-import androidx.work.WorkManager
+import android.os.Build
+import androidx.work.*
 import com.pemwa.devbytesplayer.work.RefreshDataWorker
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -35,7 +34,8 @@ class DevByteApplication : Application() {
     private val applicationScope = CoroutineScope(Dispatchers.Default)
 
     /**
-     * An initialization function that does not block the main thread
+     * An initialization function that does not block the main thread.
+     * It runs the [setupRecurringWork] in the coroutine.
      */
     private fun delayedInit() = applicationScope.launch {
         setupRecurringWork()
@@ -43,12 +43,26 @@ class DevByteApplication : Application() {
 
     /**
      * Making a PeriodWorkRequest for the RefreshDataWorker.
-     * It runs only once every day.
+     * It runs only once every day an with the defined constraints.
      */
     private fun setupRecurringWork() {
+
+        // Using a Builder to define constraints.
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.UNMETERED)
+            .setRequiresBatteryNotLow(true)
+            .setRequiresCharging(true)
+            .apply {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    setRequiresDeviceIdle(true)
+                }
+            }.build()
+
+        // Set up and schedule a PeriodicWorkRequest
         val repeatingRequest = PeriodicWorkRequestBuilder<RefreshDataWorker>(
-            1, TimeUnit.DAYS
-        ).build()
+            1, TimeUnit.DAYS)
+            .setConstraints(constraints)
+            .build()
 
         // Schedule the work as unique
         WorkManager.getInstance()
