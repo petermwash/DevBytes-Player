@@ -20,6 +20,7 @@ import com.pemwa.devbytesplayer.databinding.DevbyteItemBinding
 import com.pemwa.devbytesplayer.databinding.FragmentDevByteBinding
 import com.pemwa.devbytesplayer.domain.Video
 import com.pemwa.devbytesplayer.viewmodels.DevByteViewModel
+import com.pemwa.devbytesplayer.viewmodels.DevByteViewModelFactory
 
 /**
  * Show a list of DevBytes on screen.
@@ -35,7 +36,7 @@ class DevByteFragment : Fragment() {
         val activity = requireNotNull(this.activity) {
             "You can only access the viewModel after onActivityCreated()"
         }
-        ViewModelProviders.of(this, DevByteViewModel.Factory(activity.application))
+        ViewModelProviders.of(this, DevByteViewModelFactory(activity.application))
             .get(DevByteViewModel::class.java)
     }
 

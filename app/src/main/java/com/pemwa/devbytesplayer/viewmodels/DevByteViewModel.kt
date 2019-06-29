@@ -1,15 +1,13 @@
 package com.pemwa.devbytesplayer.viewmodels
 
 import android.app.Application
-import androidx.lifecycle.*
-import com.pemwa.devbytesplayer.domain.Video
-import com.pemwa.devbytesplayer.network.Network
-import com.pemwa.devbytesplayer.network.asDomainModel
+import androidx.lifecycle.AndroidViewModel
+import com.pemwa.devbytesplayer.database.getDatabaseInstance
+import com.pemwa.devbytesplayer.repository.VideosRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import java.io.IOException
 
 /**
  * DevByteViewModel designed to store and manage UI-related data in a lifecycle conscious way. This
@@ -39,37 +37,61 @@ class DevByteViewModel(application: Application) : AndroidViewModel(application)
     private val viewModelScope = CoroutineScope(viewModelJob + Dispatchers.Main)
 
     /**
-     * A playlist of videos that can be shown on the screen. This is private to avoid exposing a
-     * way to set this value to observers.
+     * A database variable to hold the singleton instance of our db
      */
-    private val _playlist = MutableLiveData<List<Video>>()
+    private val database = getDatabaseInstance(application)
 
     /**
-     * A playlist of videos that can be shown on the screen. Views should use this to get access
-     * to the data.
+     * Creating an instance of the repository
      */
-    val playlist: LiveData<List<Video>>
-        get() = _playlist
+    private val videosRepository = VideosRepository(database)
 
     /**
-     * init{} is called immediately when this ViewModel is created.
+     * Refreshing the videos using the repository.
      */
     init {
-        refreshDataFromNetwork()
+        viewModelScope.launch {
+            videosRepository.refreshVideos()
+        }
     }
 
     /**
-     * Refresh data from network and pass it via LiveData. Use a coroutine launch to get to
-     * background thread.
+     * Creating a videos playlist from the repository
      */
-    private fun refreshDataFromNetwork() = viewModelScope.launch {
-        try {
-            val playlist = Network.devbytes.getPlaylist().await()
-            _playlist.postValue(playlist.asDomainModel())
-        } catch (networkError: IOException) {
-            // Handle the error
-        }
-    }
+    val playlist = videosRepository.videos
+
+//    /**
+//     * A playlist of videos that can be shown on the screen. This is private to avoid exposing a
+//     * way to set this value to observers.
+//     */
+//    private val _playlist = MutableLiveData<List<Video>>()
+//
+//    /**
+//     * A playlist of videos that can be shown on the screen. Views should use this to get access
+//     * to the data.
+//     */
+//    val playlist: LiveData<List<Video>>
+//        get() = _playlist
+//
+//    /**
+//     * init{} is called immediately when this ViewModel is created.
+//     */
+//    init {
+//        refreshDataFromNetwork()
+//    }
+//
+//    /**
+//     * Refresh data from network and pass it via LiveData. Use a coroutine launch to get to
+//     * background thread.
+//     */
+//    private fun refreshDataFromNetwork() = viewModelScope.launch {
+//        try {
+//            val playlist = Network.devbytes.getPlaylist().await()
+//            _playlist.postValue(playlist.asDomainModel())
+//        } catch (networkError: IOException) {
+//            // Handle the error
+//        }
+//    }
 
     /**
      * Cancel all coroutines when the ViewModel is cleared
@@ -77,18 +99,5 @@ class DevByteViewModel(application: Application) : AndroidViewModel(application)
     override fun onCleared() {
         super.onCleared()
         viewModelJob.cancel()
-    }
-
-    /**
-     * Factory for constructing DevByteViewModel with parameter
-     */
-    class Factory(val app: Application) : ViewModelProvider.Factory {
-        override fun <T : ViewModel?> create(modelClass: Class<T>): T {
-            if (modelClass.isAssignableFrom(DevByteViewModel::class.java)) {
-                @Suppress("UNCHECKED_CAST")
-                return DevByteViewModel(app) as T
-            }
-            throw IllegalArgumentException("Unable to construct viewmodel")
-        }
     }
 }
